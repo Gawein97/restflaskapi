@@ -1,78 +1,40 @@
-from flask import Flask, jsonify, request
-
+from flask import Flask
+from flask_restful import Resource, Api, reqparse
+from schemas.book import BookSerializer
+from models.book import Book
 
 app = Flask(__name__)
-stores = [
-    {
-        "name": "Apple Store",
-        "items": [
-            {
-                "name": "Macbook",
-                "price": 1000.99
-            },
-            {
-                "name": "Macbook Pro",
-                "price": 2000.50
-            }
-        ]
-    }
-]
+api = Api(app)
+
+books = []
 
 
-# POST /store data: {name: str}
-@app.route("/store", methods=["POST"])
-def create_store():
-    request_data = request.get_json()
-    new_store = {
-        "name": request_data["name"],
-        "items": []
-    }
-    stores.append(new_store)
-    return jsonify(new_store)
+class BookApi(Resource):
+    """
+    Api resource binded to /book route
+    """
+    parser = reqparse.RequestParser()
+    parser.add_argument("name", required=True, type=str)
+    parser.add_argument("author", required=True, type=str)
+    parser.add_argument("pages", required=True, type=int)
+    parser.add_argument("price", required=True, type=float)
+
+    def get(self, name: str):
+        for b in books:
+            if b.name == name:
+                return BookSerializer(b).data
+        return {"message": f"no book with name {name}"}
+
+    def post(self):
+        args = self.parser.parse_args()
+        if next(filter(lambda b: b.name == args["name"], books), None) is not None:
+            return {'message': "the book with name '{}' already exists.".format(args["name"])}, 400
+        new_book = Book(args["name"], args["author"], args["pages"], args["price"])
+        books.append(new_book)
+        return BookSerializer(new_book).data
 
 
-# GET /store/<str: name>
-@app.route("/store/<string:name>", methods=["GET"])
-def get_store(name):
-    # iterate over stores
-    for store in stores:
-        if store.get("name") == name:
-            return jsonify(store)
-    return jsonify({"message": "store not found"})
-
-
-# GET /stores
-@app.route("/stores", methods=["GET"])
-def get_stores():
-    return jsonify({"stores": stores})
-
-
-# POST /store/<str: name>/item data: {name:str, price:float}
-@app.route("/store/<string:name>/item", methods=["POST"])
-def create_store_item(name):
-    request_data = request.get_json()
-    for store in stores:
-        if store.get("name") == name:
-            try:
-                new_item = {
-                    "name": request_data["name"],
-                    "price": request_data["price"]
-                }
-            except KeyError:
-                return jsonify({"message": "error"})
-            store["items"].append(new_item)
-            return jsonify(new_item), 201
-    return jsonify({"message": "store not found"})
-
-
-# GET /store/<str: name>/items
-@app.route("/store/<string:name>/items", methods=["GET"])
-def get_store_items(name):
-    for store in stores:
-        if store.get("name") == name:
-            return jsonify({"items": store["items"]})
-    return jsonify({"message": "store not found"})
-
+api.add_resource(BookApi, "/book/<string:name>", "/book/")
 
 if __name__ == '__main__':
     app.run(debug=True)
