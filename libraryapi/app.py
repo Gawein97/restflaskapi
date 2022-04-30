@@ -19,7 +19,6 @@ class BookApi(Resource):
     parser.add_argument("pages", required=True, type=int)
     parser.add_argument("price", required=True, type=float)
 
-    @jwt_required()
     def get(self, name: str):
         book = next(filter(lambda b: b.name == name, books), None)
         if book:
@@ -34,6 +33,23 @@ class BookApi(Resource):
         new_book = Book(args["name"], args["author"], args["pages"], args["price"])
         books.append(new_book)
         return BookSerializer(new_book).data, 201
+
+    @jwt_required()
+    def delete(self, name):
+        global books
+        books = list(filter(lambda b: b.name != name, books))
+        return {"message": "book deleted"}, 200
+
+    @jwt_required()
+    def put(self):
+        args = self.parser.parse_args(strict=True)
+        book = next(filter(lambda b: b.name == args["name"], books), None)
+        if book is None:
+            book = Book(args["name"], args["author"], args["pages"], args["price"])
+            books.append(book)
+        else:
+            book.update(**args)
+        return BookSerializer(book).data, 200
 
 
 class BooksListApi(Resource):

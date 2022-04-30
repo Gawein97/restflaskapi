@@ -8,3 +8,8 @@ class Book:
         self.author = author
         self.pages = pages
         self.price = price
+
+    def update(self, **kwargs):
+        for k, v in kwargs.items():
+            if hasattr(self, k):
+                self.__dict__[k] = v
