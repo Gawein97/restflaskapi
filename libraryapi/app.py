@@ -2,6 +2,9 @@ from flask import Flask
 from flask_restful import Resource, Api, reqparse
 from schemas.book import BookSerializer
 from models.book import Book
+from flask_jwt import JWT, jwt_required
+from libraryapi.security import authenticate, identity
+
 
 books = []
 
@@ -16,12 +19,14 @@ class BookApi(Resource):
     parser.add_argument("pages", required=True, type=int)
     parser.add_argument("price", required=True, type=float)
 
+    @jwt_required()
     def get(self, name: str):
         book = next(filter(lambda b: b.name == name, books), None)
         if book:
             return BookSerializer(book).data, 200
         return {"message": f"no book with name {name}"}, 404
 
+    @jwt_required()
     def post(self):
         args = self.parser.parse_args(strict=True)
         if next(filter(lambda b: b.name == args["name"], books), None) is not None:
@@ -52,6 +57,7 @@ def create_app():
     app.config.from_object("config.settings")
     app.config.from_pyfile("settings.py", silent=True)
 
+    jwt = JWT(app, authenticate, identity)
     # Api extension register and resources initialization
     api = Api(app)
     api.add_resource(BookApi, "/book/<string:name>", "/book")
