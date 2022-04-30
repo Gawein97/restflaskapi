@@ -1,10 +1,9 @@
 from flask import Flask
 from flask_restful import Resource, Api, reqparse
-from schemas.book import BookSerializer
-from models.book import Book
+from libraryapi.schemas import BookSerializer
+from libraryapi.models import Book
 from flask_jwt import JWT, jwt_required
 from libraryapi.security import authenticate, identity
-
 
 books = []
 
@@ -36,6 +35,7 @@ class BookApi(Resource):
 
     @jwt_required()
     def delete(self, name):
+        # todo: implement check if book was actually deleted now it shows every time
         global books
         books = list(filter(lambda b: b.name != name, books))
         return {"message": "book deleted"}, 200

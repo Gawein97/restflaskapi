@@ -1,4 +1,4 @@
-from models.user import User
+from libraryapi.models import User
 
 
 users = {

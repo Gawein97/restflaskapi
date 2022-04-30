@@ -7,7 +7,7 @@ class Book:
         self.name = name
         self.author = author
         self.pages = pages
-        self.price = price
+        self.price = round(price, 2)
 
     def update(self, **kwargs):
         for k, v in kwargs.items():
