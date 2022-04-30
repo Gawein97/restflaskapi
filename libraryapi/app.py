@@ -3,9 +3,6 @@ from flask_restful import Resource, Api, reqparse
 from schemas.book import BookSerializer
 from models.book import Book
 
-app = Flask(__name__)
-api = Api(app)
-
 books = []
 
 
@@ -40,8 +37,24 @@ class BooksListApi(Resource):
         return {"books": BookSerializer(books, many=True).data}, 200
 
 
-api.add_resource(BookApi, "/book/<string:name>", "/book")
-api.add_resource(BooksListApi, "/books")
+class AuthorListApi(Resource):
+    def get(self):
+        return {"authors": None}
 
-if __name__ == '__main__':
-    app.run(debug=True)
+
+def create_app():
+    """
+    Factory for creating flask app
+    :return app
+    """
+
+    app = Flask(__name__, instance_relative_config=True)
+    app.config.from_object("config.settings")
+    app.config.from_pyfile("settings.py", silent=True)
+
+    # Api extension register and resources initialization
+    api = Api(app)
+    api.add_resource(BookApi, "/book/<string:name>", "/book")
+    api.add_resource(BooksListApi, "/books")
+    api.add_resource(AuthorListApi, "/authors")
+    return app
