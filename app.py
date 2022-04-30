@@ -20,13 +20,13 @@ class BookApi(Resource):
     parser.add_argument("price", required=True, type=float)
 
     def get(self, name: str):
-        for b in books:
-            if b.name == name:
-                return BookSerializer(b).data, 200
+        book = next(filter(lambda b: b.name == name, books), None)
+        if book:
+            return BookSerializer(book).data, 200
         return {"message": f"no book with name {name}"}, 404
 
     def post(self):
-        args = self.parser.parse_args()
+        args = self.parser.parse_args(strict=True)
         if next(filter(lambda b: b.name == args["name"], books), None) is not None:
             return {'message': "the book with name '{}' already exists.".format(args["name"])}, 400
         new_book = Book(args["name"], args["author"], args["pages"], args["price"])
