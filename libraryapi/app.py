@@ -4,6 +4,7 @@ from libraryapi.schemas import BookSerializer
 from libraryapi.models import Book
 from flask_jwt import JWT, jwt_required
 from libraryapi.security import authenticate, identity
+from libraryapi.resources.user_register import UserRegister
 
 books = []
 
@@ -79,4 +80,5 @@ def create_app():
     api.add_resource(BookApi, "/book/<string:name>", "/book")
     api.add_resource(BooksListApi, "/books")
     api.add_resource(AuthorListApi, "/authors")
+    api.add_resource(UserRegister, "/register")
     return app
