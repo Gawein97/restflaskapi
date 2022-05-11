@@ -42,6 +42,21 @@ class BookApi(Resource):
             cursor.execute(query, (book.name, book.author, book.pages, book.price))
             conn.commit()
 
+    @classmethod
+    def update(cls, book):
+        with sqlite3.connect("data.db") as conn:
+            cursor = conn.cursor()
+            query = """
+            UPDATE books
+            SET name=?,
+                author=?,
+                pages=?,
+                price=?
+            WHERE name=?
+            """
+            cursor.execute(query, (book.name, book.author, book.pages, book.price, book.name))
+            conn.commit()
+
     @jwt_required()
     def post(self):
         args = self.parser.parse_args(strict=True)
@@ -72,25 +87,16 @@ class BookApi(Resource):
         args = self.parser.parse_args(strict=True)
         row = self.find_by_name(args["name"])
         book = Book(args["name"], args["author"], args["pages"], args["price"])
-        if not row:
+        if row is None:
             try:
                 self.insert(book)
-                return BookSerializer(book).data, 201
             except:
                 return {"message": "error occurred"}, 500
         else:
-            with sqlite3.connect("data.db") as conn:
-                cursor = conn.cursor()
-                query = """
-                UPDATE books
-                SET name=?,
-                    author=?,
-                    pages=?,
-                    price=?
-                WHERE name=?
-                """
-                cursor.execute(query, (book.name, book.author, book.pages, book.price, book.name))
-                conn.commit()
+            try:
+                self.update(book)
+            except:
+                return {"message": "error occurred"}, 500
         return BookSerializer(book).data, 200
 
 
